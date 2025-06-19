@@ -2,14 +2,16 @@ name: Test deployment
 
 on:
   pull_request:
-    branches:
-      - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
   workflow_dispatch:
 
 jobs:
-  test-deploy:
+  test-deploy:    
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
+      pull-requests: write
+
     name: Test deployment
     runs-on: ubuntu-latest
     steps:
@@ -27,3 +29,9 @@ jobs:
         run: |
           npm run build
           npm run build:docs
+
+
+      - name: Preview Pages
+        uses: rajyan/preview-pages@v1
+        with:
+          source-dir: build/docs/gatsby/public
