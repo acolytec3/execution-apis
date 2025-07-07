@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
   workflow_dispatch:
 
 jobs:
@@ -14,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,3 +28,45 @@ jobs:
         run: |
           npm run build
           npm run build:docs
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        node-version: [24]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --frozen-lockfile
+      - name: Build docs
+        run: |
+          npm run build
+          npm run build:docs
+      - name: Cache docs build output
+        uses: actions/cache@v4
+        with:
+          path: docs/public
+          key: docs-build-${{ github.sha }}
+          restore-keys: |
+            docs-build-
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: deploy
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/deploy-preview.yaml
+    with:
+      pr_number: ${{ github.event.number }}
+      commit_sha: ${{ github.sha }}
+      action: ${{ github.event.action == 'closed' && 'delete' || 'create' }}
+    secrets:
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
