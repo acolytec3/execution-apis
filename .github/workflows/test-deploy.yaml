@@ -55,6 +55,13 @@ jobs:
         run: |
           npm run build
           npm run build:docs
+      - name: Build preview docs
+        run: |
+          cd build/docs/gatsby
+          npm install
+          cp ../../../docs/config/gatsby-config.js gatsby-config-preview.js
+          sed -i 's|pathPrefix: "/execution-apis"|pathPrefix: "/execution-apis/preview/PR${{ github.event.number }}"|g' gatsby-config-preview.js
+          gatsby build --prefix-paths --config gatsby-config-preview.js
       - name: Cache docs build output
         uses: actions/cache@v4
         with:
