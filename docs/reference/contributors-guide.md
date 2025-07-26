@@ -1,4 +1,4 @@
-# Contributors Guide
+# Contributors Guide with cheese
 
 This guide will explain for new and experienced contributors alike how to
 propose changes to Ethereum JSON-RPC API.

@@ -55,22 +55,16 @@ jobs:
         run: |
           npm run build
           npm run build:docs
-      - name: Build preview docs
+      - name: Create preview build
         run: |
           cd build/docs/gatsby
-          npm install
-          # Backup original config
-          cp gatsby-config.js gatsby-config-original.js
-          # Modify config for preview
-          sed -i 's|pathPrefix: "/execution-apis"|pathPrefix: "/execution-apis/preview/PR${{ github.event.number }}"|g' gatsby-config.js
-          # Build with modified config
-          npx gatsby build --prefix-paths
-          # Restore original config
-          cp gatsby-config-original.js gatsby-config.js
-          # Move preview build to separate directory
-          mv public public-preview
-          # Rebuild main site
-          npx gatsby build --prefix-paths
+          # Copy the built files for preview
+          cp -r public public-preview
+          # Fix paths in the preview build
+          find public-preview -name "*.html" -exec sed -i 's|href="/execution-apis/|href="/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
+          find public-preview -name "*.html" -exec sed -i 's|src="/execution-apis/|src="/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
+          find public-preview -name "*.js" -exec sed -i 's|"/execution-apis/|"/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
+          find public-preview -name "*.css" -exec sed -i 's|url(/execution-apis/|url(/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
       - name: Cache docs build output
         uses: actions/cache@v4
         with:
