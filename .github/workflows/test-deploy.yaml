@@ -69,7 +69,6 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            build/docs/gatsby/public
             build/docs/gatsby/public-preview
           key: docs-build-${{ github.sha }}
           restore-keys: |
