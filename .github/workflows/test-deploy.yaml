@@ -67,10 +67,16 @@ jobs:
           npx gatsby build --prefix-paths
           # Restore original config
           cp gatsby-config-original.js gatsby-config.js
+          # Move preview build to separate directory
+          mv public public-preview
+          # Rebuild main site
+          npx gatsby build --prefix-paths
       - name: Cache docs build output
         uses: actions/cache@v4
         with:
-          path: build/docs/gatsby/public
+          path: |
+            build/docs/gatsby/public
+            build/docs/gatsby/public-preview
           key: docs-build-${{ github.sha }}
           restore-keys: |
             docs-build-

@@ -42,7 +42,9 @@ jobs:
         if: inputs.action == 'create'
         uses: actions/cache@v4
         with:
-          path: build/docs/gatsby/public
+          path: |
+            build/docs/gatsby/public
+            build/docs/gatsby/public-preview
           key: docs-build-${{ inputs.commit_sha }}
           restore-keys: |
             docs-build-
@@ -51,7 +53,7 @@ jobs:
         if: inputs.action == 'create'
         run: |
           mkdir -p gh-pages/preview/PR${{ inputs.pr_number }}
-          cp -r build/docs/gatsby/public/* gh-pages/preview/PR${{ inputs.pr_number }}/
+          cp -r build/docs/gatsby/public-preview/* gh-pages/preview/PR${{ inputs.pr_number }}/
 
       - name: Remove preview directory
         if: inputs.action == 'delete'
