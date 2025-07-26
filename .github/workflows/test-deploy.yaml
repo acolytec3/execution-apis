@@ -59,9 +59,14 @@ jobs:
         run: |
           cd build/docs/gatsby
           npm install
-          cp ../../../docs/config/gatsby-config.js gatsby-config-preview.js
-          sed -i 's|pathPrefix: "/execution-apis"|pathPrefix: "/execution-apis/preview/PR${{ github.event.number }}"|g' gatsby-config-preview.js
-          npx gatsby build --prefix-paths --config gatsby-config-preview.js
+          # Backup original config
+          cp gatsby-config.js gatsby-config-original.js
+          # Modify config for preview
+          sed -i 's|pathPrefix: "/execution-apis"|pathPrefix: "/execution-apis/preview/PR${{ github.event.number }}"|g' gatsby-config.js
+          # Build with modified config
+          npx gatsby build --prefix-paths
+          # Restore original config
+          cp gatsby-config-original.js gatsby-config.js
       - name: Cache docs build output
         uses: actions/cache@v4
         with:
