@@ -26,12 +26,12 @@ jobs:
     name: Deploy Preview
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout PR branch for cache restore
+        if: inputs.action == 'create'
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.TOKEN }}
-          ref: gh-pages
-          path: gh-pages
+          ref: ${{ inputs.commit_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,6 +48,13 @@ jobs:
           key: docs-build-${{ inputs.commit_sha }}
           restore-keys: |
             docs-build-
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+          ref: gh-pages
+          path: gh-pages
 
       - name: Create preview directory and copy files
         if: inputs.action == 'create'
