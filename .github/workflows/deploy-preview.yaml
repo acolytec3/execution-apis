@@ -38,20 +38,19 @@ jobs:
         with:
           node-version: 20
 
-      - name: Restore docs build output
-        if: inputs.action == 'create'
-        uses: actions/cache@v4
-        with:
-          path: build/docs/gatsby/public
-          key: docs-build-${{ inputs.commit_sha }}
-          restore-keys: |
-            docs-build-
-
-      - name: Create preview directory
+      - name: Create preview directory and restore build
         if: inputs.action == 'create'
         run: |
           mkdir -p gh-pages/preview/PR${{ inputs.pr_number }}
-          cp -r build/docs/gatsby/public/* gh-pages/preview/PR${{ inputs.pr_number }}/
+
+      - name: Restore docs build output to preview directory
+        if: inputs.action == 'create'
+        uses: actions/cache@v4
+        with:
+          path: gh-pages/preview/PR${{ inputs.pr_number }}
+          key: docs-build-${{ inputs.commit_sha }}
+          restore-keys: |
+            docs-build-
 
       - name: Remove preview directory
         if: inputs.action == 'delete'
