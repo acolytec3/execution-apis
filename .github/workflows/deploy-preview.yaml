@@ -33,16 +33,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm install --frozen-lockfile
 
       - name: Restore docs build output
         if: inputs.action == 'create'
         uses: actions/cache@v4
         with:
-          path: docs/public
+          path: build/docs/gatsby/public
           key: docs-build-${{ inputs.commit_sha }}
           restore-keys: |
             docs-build-
@@ -51,7 +47,7 @@ jobs:
         if: inputs.action == 'create'
         run: |
           mkdir -p gh-pages/preview/PR${{ inputs.pr_number }}
-          cp -r docs/public/* gh-pages/preview/PR${{ inputs.pr_number }}/
+          cp -r build/docs/gatsby/public/* gh-pages/preview/PR${{ inputs.pr_number }}/
 
       - name: Remove preview directory
         if: inputs.action == 'delete'

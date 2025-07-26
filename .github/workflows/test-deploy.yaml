@@ -32,7 +32,8 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    needs: test-deploy
+    if: github.event_name == 'pull_request'
     strategy:
       matrix:
         node-version: [24]
@@ -54,7 +55,7 @@ jobs:
       - name: Cache docs build output
         uses: actions/cache@v4
         with:
-          path: docs/public
+          path: build/docs/gatsby/public
           key: docs-build-${{ github.sha }}
           restore-keys: |
             docs-build-
