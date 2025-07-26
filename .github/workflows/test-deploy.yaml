@@ -29,10 +29,9 @@ jobs:
           npm run build
           npm run build:docs
 
-  deploy:
-    name: Deploy
+  test-deploy-24:
+    name: Deploy 24
     runs-on: ubuntu-latest
-    needs: test-deploy
     if: github.event_name == 'pull_request'
     strategy:
       matrix:
@@ -62,7 +61,7 @@ jobs:
 
   deploy-preview:
     name: Deploy Preview
-    needs: deploy
+    needs: test-deploy-24
     if: github.event_name == 'pull_request'
     uses: ./.github/workflows/deploy-preview.yaml
     with:
