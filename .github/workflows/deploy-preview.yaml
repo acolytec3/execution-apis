@@ -6,9 +6,6 @@ on:
       pr_number:
         required: true
         type: string
-      commit_sha:
-        required: true
-        type: string
       action:
         required: true
         type: string
@@ -26,28 +23,6 @@ jobs:
     name: Deploy Preview
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR branch for cache restore
-        if: inputs.action == 'create'
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.TOKEN }}
-          ref: ${{ inputs.commit_sha }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Restore docs build output
-        if: inputs.action == 'create'
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/docs/gatsby/public-preview
-          key: docs-build-${{ inputs.commit_sha }}
-          restore-keys: |
-            docs-build-
-
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
         with:
@@ -59,8 +34,14 @@ jobs:
         if: inputs.action == 'create'
         run: |
           mkdir -p gh-pages/preview/PR${{ inputs.pr_number }}
-          cp -r build/docs/gatsby/public-preview/* gh-pages/preview/PR${{ inputs.pr_number }}/
 
+      - name: Download preview build artifact
+        if: inputs.action == 'create'
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-build-pr-${{ inputs.pr_number }}
+          path: gh-pages/preview/PR${{ inputs.pr_number }}
+  
       - name: Remove preview directory
         if: inputs.action == 'delete'
         run: |

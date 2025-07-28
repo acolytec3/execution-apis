@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
   workflow_dispatch:
 
 permissions:
@@ -65,23 +70,31 @@ jobs:
           find public-preview -name "*.html" -exec sed -i 's|src="/execution-apis/|src="/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
           find public-preview -name "*.js" -exec sed -i 's|"/execution-apis/|"/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
           find public-preview -name "*.css" -exec sed -i 's|url(/execution-apis/|url(/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
-      - name: Cache docs build output
-        uses: actions/cache@v4
+      
+      - name: Upload preview build artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: |
-            build/docs/gatsby/public-preview
-          key: docs-build-${{ github.sha }}
-          restore-keys: |
-            docs-build-
+          name: preview-build-pr-${{ github.event.number }}
+          path: build/docs/gatsby/public-preview
+          retention-days: 1
 
   deploy-preview:
     name: Deploy Preview
     needs: test-deploy-24
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     uses: ./.github/workflows/deploy-preview.yaml
     with:
       pr_number: ${{ github.event.number }}
-      commit_sha: ${{ github.sha }}
-      action: ${{ github.event.action == 'closed' && 'delete' || 'create' }}
+      action: create
+    secrets:
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  remove-preview:
+    name: Remove Preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    uses: ./.github/workflows/deploy-preview.yaml
+    with:
+      pr_number: ${{ github.event.number }}
+      action: delete
     secrets:
       TOKEN: ${{ secrets.GITHUB_TOKEN }}
