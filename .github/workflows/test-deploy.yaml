@@ -56,10 +56,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install --frozen-lockfile
-      - name: Build docs
-        run: |
-          npm run build
-          npm run build:docs
       - name: Update Gatsby config for preview
         run: |
           cd docs/config
@@ -71,14 +67,12 @@ jobs:
         run: |
           npm run build:docs
           cd build/docs/gatsby
-          # Copy the built files for preview
-          cp -r public public-preview
       
       - name: Upload preview build artifact
         uses: actions/upload-artifact@v4
         with:
           name: preview-build-pr-${{ github.event.number }}
-          path: build/docs/gatsby/public-preview
+          path: build/docs/gatsby/public
           retention-days: 1
 
   deploy-preview:
