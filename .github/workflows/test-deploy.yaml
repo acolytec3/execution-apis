@@ -60,16 +60,19 @@ jobs:
         run: |
           npm run build
           npm run build:docs
-      - name: Create preview build
+      - name: Update Gatsby config for preview
         run: |
+          cd docs/config
+          # Update gatsby-config.js to use preview path prefix
+          sed -i 's|pathPrefix: "/execution-apis"|pathPrefix: "/execution-apis/preview/PR${{ github.event.number }}"|g' gatsby-config.js
+          sed -i 's|siteUrl: "https://.*"|siteUrl: "https://${{ github.repository_owner }}.github.io"|g' gatsby-config.js
+      
+      - name: Build preview version
+        run: |
+          npm run build:docs
           cd build/docs/gatsby
           # Copy the built files for preview
           cp -r public public-preview
-          # Fix paths in the preview build
-          find public-preview -name "*.html" -exec sed -i 's|href="/execution-apis/|href="/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
-          find public-preview -name "*.html" -exec sed -i 's|src="/execution-apis/|src="/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
-          find public-preview -name "*.js" -exec sed -i 's|"/execution-apis/|"/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
-          find public-preview -name "*.css" -exec sed -i 's|url(/execution-apis/|url(/execution-apis/preview/PR${{ github.event.number }}/|g' {} \;
       
       - name: Upload preview build artifact
         uses: actions/upload-artifact@v4
