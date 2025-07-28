@@ -4,9 +4,16 @@ on:
   pull_request:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - closed
   workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   test-deploy:
@@ -14,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,3 +37,61 @@ jobs:
         run: |
           npm run build
           npm run build:docs
+
+  test-deploy-24:
+    name: Deploy 24
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    strategy:
+      matrix:
+        node-version: [24]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --frozen-lockfile
+      - name: Update Gatsby config for preview
+        run: |
+          cd docs/config
+          # Update gatsby-config.js to use preview path prefix
+          sed -i 's|pathPrefix: "/execution-apis"|pathPrefix: "/execution-apis/preview/PR${{ github.event.number }}"|g' gatsby-config.js
+          sed -i 's|siteUrl: "https://.*"|siteUrl: "https://${{ github.repository_owner }}.github.io"|g' gatsby-config.js
+      
+      - name: Build preview version
+        run: |
+          cd ../..
+          npm run build:docs
+      
+      - name: Upload preview build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-build-pr-${{ github.event.number }}
+          path: build/docs/gatsby/public
+          retention-days: 1
+
+  deploy-preview:
+    name: Deploy Preview
+    needs: test-deploy-24
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    uses: ./.github/workflows/deploy-preview.yaml
+    with:
+      pr_number: ${{ github.event.number }}
+      action: create
+    secrets:
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  remove-preview:
+    name: Remove Preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    uses: ./.github/workflows/deploy-preview.yaml
+    with:
+      pr_number: ${{ github.event.number }}
+      action: delete
+    secrets:
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
